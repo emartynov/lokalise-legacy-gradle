@@ -1,0 +1,33 @@
+// Download strings from Lokalise.co
+// Only works for Mac
+// usage `gradle -b lokalise.gradle lokalise`
+
+def tempLokaliseDir = File.createTempDir()
+tempLokaliseDir.deleteOnExit()
+
+task download(type: Exec) {
+  commandLine 'lokalise'
+
+  args '--config', 'lokalise.cfg', //project id and token
+       'd', //download
+       '-type', 'xml', //xml strings
+       '-bundle_structure', 'values-%LANG_ISO%/strings.%FORMAT%', //xml strings
+       '-dest', tempLokaliseDir, //destination
+       '--use_original', 0, //use default file name
+       '--export_empty', 'empty', //export empty
+       '--export_sort', 'a_z', //sort keys
+       '--replace_breaks', 1 //replace line breaks
+}
+
+task extract(type: Exec) {
+  commandLine 'unzip'
+
+  args '-o', "${tempLokaliseDir}/*.zip", '-d', 'app/src/main/res'
+}
+
+task lokalise() {
+  dependsOn 'download'
+  dependsOn 'extract'
+
+  tasks.findByName('extract').mustRunAfter tasks.findByName('download')
+}
